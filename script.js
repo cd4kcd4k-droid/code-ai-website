@@ -1,162 +1,160 @@
-// الدوال الأساسية للتطبيق
-async function explainCode() {
-    const code = document.getElementById('codeInput').value;
-    const language = document.getElementById('languageSelect').value;
-    
-    if (!code.trim()) {
-        showResult('⚠️ الرجاء كتابة بعض الكود أولاً');
-        return;
-    }
-    
-    showResult('🔄 جاري تحليل الكود وشرحه...');
-    
-    try {
-        const response = await simulateAIResponse('explain', code, language);
-        showResult(response);
-    } catch (error) {
-        showResult('❌ حدث خطأ: ' + error.message);
-    }
-}
+// ============ نظام المساعد الذكي ============
+// الذاكرة المؤقتة للردود السريعة
+const responseCache = new Map();
 
-async function debugCode() {
-    const code = document.getElementById('codeInput').value;
-    const language = document.getElementById('languageSelect').value;
-    
-    if (!code.trim()) {
-        showResult('⚠️ الرجاء كتابة بعض الكود أولاً');
-        return;
-    }
-    
-    showResult('🔍 جاري فحص الكود لاكتشاف الأخطاء...');
-    
-    try {
-        const response = await simulateAIResponse('debug', code, language);
-        showResult(response);
-    } catch (error) {
-        showResult('❌ حدث خطأ: ' + error.message);
-    }
-}
+const getCachedResponse = (question) => {
+    return responseCache.get(question.toLowerCase());
+};
 
-async function completeCode() {
-    const code = document.getElementById('codeInput').value;
-    const language = document.getElementById('languageSelect').value;
-    
-    if (!code.trim()) {
-        showResult('⚠️ الرجاء كتابة بعض الكود أولاً');
-        return;
+const cacheResponse = (question, answer) => {
+    responseCache.set(question.toLowerCase(), {
+        answer,
+        timestamp: Date.now()
+    });
+};
+
+// قاعدة المعرفة الذكية
+const knowledgeBase = {
+    'السلام عليكم': 'وعليكم السلام ورحمة الله! كيف يمكنني مساعدتك؟',
+    'كيف حالك': 'الحمد لله، أنا هنا لخدمتك!',
+    'شكراً': 'العفو! دائماً سعيد بالمساعدة 🎯',
+    'ماذا تعرف': 'أستطيع الإجابة على أسئلتك بسرعة فائقة وتقديم حلول ذكية',
+    'من أنت': 'أنا مساعد ذكي مُحسن للسرعة والأداء!'
+};
+
+// نظام التحليل الذكي
+class SmartAssistant {
+    constructor() {
+        this.patterns = {
+            greeting: /(مرحبا|سلام|اهلا|hello|hi)/i,
+            question: /(كيف|لماذا|متى|أين|ماذا|من)/i,
+            technical: /(كود|برمجة|تطوير|javascript|js|html|css)/i
+        };
     }
-    
-    showResult('✨ جاري تحليل الكود وإكماله...');
-    
-    try {
-        const response = await simulateAIResponse('complete', code, language);
-        showResult(response);
-    } catch (error) {
-        showResult('❌ حدث خطأ: ' + error.message);
-    }
-}
 
-function clearAll() {
-    document.getElementById('codeInput').value = '';
-    showResult('🗑️ تم مسح الكل... ابدأ من جديد!');
-}
-
-function showResult(message) {
-    document.getElementById('aiResult').textContent = message;
-}
-
-// محاكاة الذكاء الاصطناعي
-async function simulateAIResponse(action, code, language) {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const responses = {
-        explain: `📖 شرح الكود (${language}):
+    analyzeQuestion(question) {
+        question = question.toLowerCase().trim();
         
-الكود الذي كتبته:
-${code}
+        // البحث في الذاكرة المؤقتة أولاً
+        const cached = getCachedResponse(question);
+        if (cached) return cached.answer;
 
-الشرح:
-هذا الكود يبدو أنه ${getLanguageDescription(language)}.
-أرى أنك ${getCodeAnalysis(code)}.
+        // البحث في قاعدة المعرفة
+        for (const [key, value] of Object.entries(knowledgeBase)) {
+            if (question.includes(key.toLowerCase())) {
+                cacheResponse(question, value);
+                return value;
+            }
+        }
 
-نصائح للتحسين:
-1. تأكد من تسمية المتغيرات بأسماء واضحة
-2. أضِف تعليقات لتوضيح الغرض من الكود
-3. اختبر الكود بمدخلات مختلفة`,
-
-        debug: `🔧 تحليل الأخطاء (${language}):
-        
-الكود المفحوص:
-${code}
-
-النتيجة:
-${getDebugResult(code, language)}`,
-
-        complete: `🚀 إكمال الكود (${language}):
-        
-الكود الأصلي:
-${code}
-
-الإكمال المقترح:
-${getCompletion(code, language)}`
-    };
-    
-    return responses[action] || '❌ إجراء غير معروف';
-}
-
-// دوال مساعدة
-function getLanguageDescription(lang) {
-    const descriptions = {
-        python: 'كود بايثون يقوم بتنفيذ مهمة برمجية',
-        javascript: 'كود جافاسكريبت للتعامل مع صفحات الويب',
-        java: 'كود جافا للتطبيقات الكبيرة',
-        html: 'كود HTML لبناء هيكل الصفحة'
-    };
-    return descriptions[lang] || 'كود برمجي';
-}
-
-function getCodeAnalysis(code) {
-    if (code.includes('function') || code.includes('def')) {
-        return 'تعرف دوال أو دوال لتنفيذ مهام محددة';
-    }
-    if (code.includes('if') || code.includes('for') || code.includes('while')) {
-        return 'تستخدم شروط أو حلقات تكرار';
-    }
-    return 'تبدأ بمقدمة بسيطة للبرمجة';
-}
-
-function getDebugResult(code, language) {
-    const issues = [];
-    
-    if (code.includes('console.log') && language !== 'javascript') {
-        issues.push('⚠️ console.log يستخدم عادة في JavaScript فقط');
-    }
-    
-    if (code.includes('print') && language !== 'python') {
-        issues.push('⚠️ print يستخدم عادة في Python فقط');
-    }
-    
-    if (issues.length === 0) {
-        return '✅ الكود يبدو سليماً من الناحية الهيكلية';
-    }
-    
-    return issues.join('\n');
-}
-
-function getCompletion(code, language) {
-    const baseCode = code.trim();
-    
-    if (language === 'python') {
-        if (baseCode.includes('def') && !baseCode.includes('return')) {
-            return baseCode + '\n    return result  # إرجاع النتيجة';
+        // التحليل الذكي للنمط
+        if (this.patterns.greeting.test(question)) {
+            return this.generateGreetingResponse();
+        } else if (this.patterns.technical.test(question)) {
+            return this.generateTechnicalResponse(question);
+        } else {
+            return this.generateSmartResponse(question);
         }
     }
-    
-    if (language === 'javascript') {
-        if (baseCode.includes('function') && !baseCode.includes('{')) {
-            return baseCode + ' {\n    // تنفيذ الدالة هنا\n}';
-        }
+
+    generateGreetingResponse() {
+        const greetings = [
+            'أهلاً وسهلاً! كيف يمكنني مساعدتك اليوم؟ 🌟',
+            'مرحباً بك! أنا هنا للإجابة على استفساراتك ⚡',
+            'أهلاً بك! اسألني عن أي شيء 🚀'
+        ];
+        return greetings[Math.floor(Math.random() * greetings.length)];
     }
-    
-    return baseCode + '\n// ... أكمل بناءً على منطق برمجتك';
+
+    generateSmartResponse(question) {
+        const responses = [
+            `هذا سؤال مثير للاهتمام! بالنسبة لـ "${question}"، أعتقد أن...`,
+            `رائع! دعني أفكر في "${question}"...`,
+            `بناءً على سؤالك "${question}"، إليك ما يمكنني تقديمه:`,
+            `سؤال جميل! دعني أساعدك في "${question}"`
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        cacheResponse(question, randomResponse);
+        return randomResponse;
+    }
+
+    generateTechnicalResponse(question) {
+        const techAnswers = {
+            'javascript': '🎯 جافاسكريبت هي لغة برمجة رائعة لتطوير الويب!',
+            'html': '📝 HTML هي هيكل الصفحة الأساسي',
+            'css': '🎨 CSS تجعل التصميم جميلاً وسلساً',
+            'default': '💻 يمكنني مساعدتك في مواضيع البرمجة والتطوير!'
+        };
+
+        for (const [tech, answer] of Object.entries(techAnswers)) {
+            if (question.includes(tech)) {
+                return answer;
+            }
+        }
+        return techAnswers.default;
+    }
 }
+
+// ============ التكامل مع الواجهة ============
+const assistant = new SmartAssistant();
+
+function handleQuestion(question) {
+    const startTime = performance.now();
+    
+    const answer = assistant.analyzeQuestion(question);
+    
+    const endTime = performance.now();
+    const responseTime = (endTime - startTime).toFixed(2);
+    
+    return {
+        answer: answer,
+        responseTime: responseTime,
+        smart: true
+    };
+}
+
+function displayResponse(answer, responseTime) {
+    const responseDiv = document.createElement('div');
+    responseDiv.className = 'smart-response';
+    responseDiv.innerHTML = `
+        <div class="answer">${answer}</div>
+        <div class="response-info">
+            ⚡ تمت الإجابة في <strong>${responseTime}ms</strong> 
+            🧠 <strong>الذكاء الاصطناعي</strong>
+        </div>
+    `;
+    
+    // تأكد من وجود عنصر chatContainer في HTML
+    const chatContainer = document.getElementById('chatContainer');
+    if (chatContainer) {
+        chatContainer.appendChild(responseDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+// ============ التهيئة عند تحميل الصفحة ============
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ المساعد الذكي جاهز!');
+    
+    // ابحث عن عناصر الواجهة - عدل هذه الأسماء حسب HTML الخاص بك
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    
+    if (sendBtn && chatInput) {
+        sendBtn.addEventListener('click', () => {
+            const question = chatInput.value.trim();
+            if (question) {
+                const result = handleQuestion(question);
+                displayResponse(result.answer, result.responseTime);
+                chatInput.value = '';
+            }
+        });
+        
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendBtn.click();
+            }
+        });
+    }
+});
