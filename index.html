@@ -1,1 +1,382 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المساعد الذكي - مساعدي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .smart-response {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-right: 4px solid #667eea;
+        }
+        
+        .answer {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .response-info {
+            font-size: 0.9em;
+            color: #666;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+        
+        .input-container {
+            display: flex;
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            gap: 10px;
+        }
+        
+        #chatInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1.1em;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        #chatInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        #sendBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .welcome-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            margin: 20px 0;
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            text-align: center;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .chat-container {
+                height: 400px;
+            }
+            
+            .input-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 المساعد الذكي</h1>
+            <p>أسألني أي شيء... سأجيبك بسرعة فائقة وذكاء!</p>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-message">
+                🎯 مرحباً! أنا مساعدك الذكي. اسألني عن أي شيء وسأجيبك فوراً...
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            ⚡ المساعد يكتب...
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="chatInput" placeholder="اكتب سؤالك هنا..." autocomplete="off">
+            <button id="sendBtn">إرسال 🚀</button>
+        </div>
+    </div>
 
+    <script>
+        // ============ نظام المساعد الذكي ============
+        const responseCache = new Map();
+
+        const getCachedResponse = (question) => {
+            return responseCache.get(question.toLowerCase());
+        };
+
+        const cacheResponse = (question, answer) => {
+            responseCache.set(question.toLowerCase(), {
+                answer,
+                timestamp: Date.now()
+            });
+        };
+
+        // قاعدة المعرفة الذكية
+        const knowledgeBase = {
+            'السلام عليكم': 'وعليكم السلام ورحمة الله وبركاته! 🌟 كيف يمكنني مساعدتك اليوم؟',
+            'مرحبا': 'أهلاً وسهلاً! أنا المساعد الذكي، اسألني عن أي شيء ⚡',
+            'اهلا': 'أهلاً بك! 🎯 أنا هنا لمساعدتك في كل ما تحتاج',
+            'كيف حالك': 'الحمد لله بأفضل حال! 😊 سعيد لخدمتك',
+            'شكراً': 'العفو! دائماً سعيد بالمساعدة 🚀',
+            'شكرا': 'لا شكر على واجب! 🌸',
+            'ماذا تعرف': 'أستطيع الإجابة على أسئلتك بسرعة فائقة وتقديم حلول ذكية في البرمجة والتطوير',
+            'من أنت': 'أنا مساعد ذكي مُحسن للسرعة والأداء! 🤖 طورني فريق cd4kcd4k',
+            'javascript': '🎯 جافاسكريبت هي لغة برمجة رائعة لتطوير الويب! يمكنني مساعدتك في مشاريع JS',
+            'html': '📝 HTML هي هيكل الصفحة الأساسي - لغة ترميز النصوص التشعبية',
+            'css': '🎨 CSS تجعل التصميم جميلاً وسلساً - أوراق الأنماط المتتالية'
+        };
+
+        // نظام التحليل الذكي
+        class SmartAssistant {
+            constructor() {
+                this.patterns = {
+                    greeting: /(مرحبا|سلام|اهلا|hello|hi|السلام)/i,
+                    question: /(كيف|لماذا|متى|أين|ماذا|من|ما)/i,
+                    technical: /(كود|برمجة|تطوير|javascript|js|html|css|برمج)/i,
+                    thanks: /(شكر|thank|ممتاز|رائع)/i
+                };
+            }
+
+            analyzeQuestion(question) {
+                question = question.toLowerCase().trim();
+                
+                // البحث في الذاكرة المؤقتة أولاً
+                const cached = getCachedResponse(question);
+                if (cached) return cached.answer;
+
+                // البحث في قاعدة المعرفة
+                for (const [key, value] of Object.entries(knowledgeBase)) {
+                    if (question.includes(key.toLowerCase())) {
+                        cacheResponse(question, value);
+                        return value;
+                    }
+                }
+
+                // التحليل الذكي للنمط
+                if (this.patterns.greeting.test(question)) {
+                    return this.generateGreetingResponse();
+                } else if (this.patterns.technical.test(question)) {
+                    return this.generateTechnicalResponse(question);
+                } else if (this.patterns.thanks.test(question)) {
+                    return this.generateThanksResponse();
+                } else if (this.patterns.question.test(question)) {
+                    return this.generateQuestionResponse(question);
+                } else {
+                    return this.generateSmartResponse(question);
+                }
+            }
+
+            generateGreetingResponse() {
+                const greetings = [
+                    'أهلاً وسهلاً! 🌟 كيف يمكنني مساعدتك اليوم؟',
+                    'مرحباً بك! ⚡ أنا هنا للإجابة على جميع استفساراتك',
+                    'أهلاً بك! 🚀 اسألني عن أي شيء في البرمجة أو التطوير'
+                ];
+                return greetings[Math.floor(Math.random() * greetings.length)];
+            }
+
+            generateThanksResponse() {
+                const thanks = [
+                    'العفو! 🌸 دائماً سعيد بمساعدتك',
+                    'لا شكر على واجب! 🎯 أتمنى أن أكون أفدتك',
+                    'شكراً لك! 🌟 أنا هنا دائماً لمساعدتك'
+                ];
+                return thanks[Math.floor(Math.random() * thanks.length)];
+            }
+
+            generateQuestionResponse(question) {
+                const responses = [
+                    `سؤال ممتاز! 🤔 بالنسبة لـ "${question}"، هذا يعتمد على عدة عوامل...`,
+                    `رائع! 🎯 دعني أفكر في "${question}"... أعتقد أن الحل قد يكون...`,
+                    `سؤال عميق! 💡 فيما يخص "${question}"، يمكنني تقديم النصيحة التالية...`
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            generateSmartResponse(question) {
+                const responses = [
+                    `هذا مثير للاهتمام! 🌟 بالنسبة لـ "${question}"، أعتقد أن الحل الأمثل هو...`,
+                    `رائع! 🚀 دعني أحلل "${question}"... بناءً على ذلك أرى أن...`,
+                    `سؤال جميل! 💫 فيما يخص "${question}"، إليك ما يمكنني اقتراحه...`,
+                    `ممتاز! 🎯 دعني أفكر في "${question}"... أرى أن الخيار الأفضل هو...`
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                cacheResponse(question, randomResponse);
+                return randomResponse;
+            }
+
+            generateTechnicalResponse(question) {
+                const techAnswers = {
+                    'javascript': '🎯 جافاسكريبت: لغة برمجة متعددة الاستخدامات - مثالية لتطوير الويب والتطبيقات!',
+                    'html': '📝 HTML: هيكل الصفحة الأساسي - العمود الفقري لأي موقع ويب',
+                    'css': '🎨 CSS: تنسيق وتصميم المواقع - تجعل الويب جميلاً وسلساً',
+                    'برمجة': '💻 البرمجة: عالم رائع! يمكنني مساعدتك في تعليم أي لغة برمجة',
+                    'موقع': '🌐 تطوير المواقع: HTML + CSS + JS = موقع رائع! أيمكنني مساعدتك في مشروع؟',
+                    'default': '💻 يمكنني مساعدتك في مواضيع البرمجة، التطوير، الجافاسكريبت، HTML، CSS والمزيد!'
+                };
+
+                for (const [tech, answer] of Object.entries(techAnswers)) {
+                    if (question.includes(tech)) {
+                        return answer;
+                    }
+                }
+                return techAnswers.default;
+            }
+        }
+
+        // ============ التكامل مع الواجهة ============
+        const assistant = new SmartAssistant();
+
+        function handleQuestion(question) {
+            const startTime = performance.now();
+            
+            const answer = assistant.analyzeQuestion(question);
+            
+            const endTime = performance.now();
+            const responseTime = (endTime - startTime).toFixed(2);
+            
+            return {
+                answer: answer,
+                responseTime: responseTime,
+                smart: true
+            };
+        }
+
+        function displayResponse(answer, responseTime) {
+            const chatContainer = document.getElementById('chatContainer');
+            const welcomeMessage = chatContainer.querySelector('.welcome-message');
+            
+            if (welcomeMessage) {
+                welcomeMessage.style.display = 'none';
+            }
+
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'smart-response';
+            responseDiv.innerHTML = `
+                <div class="answer">${answer}</div>
+                <div class="response-info">
+                    ⚡ تمت الإجابة في <strong>${responseTime}ms</strong> 
+                    🧠 <strong>الذكاء الاصطناعي</strong>
+                </div>
+            `;
+            
+            chatContainer.appendChild(responseDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // ============ التهيئة عند تحميل الصفحة ============
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ المساعد الذكي جاهز!');
+            
+            const chatInput = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            function sendMessage() {
+                const question = chatInput.value.trim();
+                if (question) {
+                    // إظهار مؤشر الكتابة
+                    typingIndicator.style.display = 'block';
+                    
+                    // محاكاة وقت المعالجة (للتأثير البصري)
+                    setTimeout(() => {
+                        const result = handleQuestion(question);
+                        displayResponse(result.answer, result.responseTime);
+                        chatInput.value = '';
+                        typingIndicator.style.display = 'none';
+                    }, 500);
+                }
+            }
+            
+            sendBtn.addEventListener('click', sendMessage);
+            
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // التركيز التلقائي على حقل الإدخال
+            chatInput.focus();
+        });
+    </script>
+</body>
+</html>
